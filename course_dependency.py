@@ -1,0 +1,138 @@
+import itertools
+import re
+import pandas as pd
+import numpy as np
+
+import networkx as nx
+
+# Initialize a directed graph
+course_graph = nx.DiGraph()
+
+#Load the data 
+df = pd.read_json('rutgers_courses.json')
+
+# Extract major from courseString
+df['major'] = df['courseString'].str.split(':').str[1]
+
+# Function to find all combinations of courses
+def find_combinations(nested_course_lists):
+
+    result = []
+
+    for course_lists in nested_course_lists:
+        combinations = list(itertools.product(*course_lists))
+        result.append(combinations)
+
+    return result
+   
+# Extract prerequisite course codes
+def parse_prerequisites(preReqNotes):
+
+    # Remove HTML tags
+    clean_notes = re.sub(r"<[^>]+>", "", preReqNotes)
+
+    # Split by 'OR' to identify different main groups
+    or_groups = []
+    for group in clean_notes.split("OR"):
+        or_groups.append(group.strip())
+
+    prerequisites = []
+    
+    # Process each OR group
+    for group in or_groups:
+        and_courses = []
+        
+        # Split by 'and' to identify AND conditions within each group
+        and_conditions = group.split("and")
+        
+        for condition in and_conditions:
+
+            # Find all course numbers in the condition
+            courses = re.findall(r'\b\d{2}:\d{3}:\d{3}\b', condition)
+            
+            if courses:  # Only add non-empty results
+                and_courses.append(courses)
+        
+        # Append the AND conditions for each OR group
+        if and_courses:
+            prerequisites.append(and_courses)
+    
+    return prerequisites
+
+# Flatten the prerequisite combinations into a single list
+def flatten_combinations(nested_combinations):
+
+    flattened_list = []
+
+    for group in nested_combinations:
+        for combo in group:
+            flattened_list.append(combo)
+
+    return flattened_list
+
+def print_prereqs(major_number, df):
+
+    # Filter the DataFrame for the specified major
+    major_courses = df[df['major'] == major_number]
+    major_courses = major_courses[
+        ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
+    ]
+    
+    # Print the courseString and flattened prerequisites
+    for index, row in major_courses.iterrows():
+        course_string = row['courseString']
+        flattened_prereqs = row['flattened_prerequisite_codes']
+        print(f"{course_string}: {flattened_prereqs}")
+        print('\n')
+        
+
+def create_adjacency_matrix(major_number, df):
+    df['prerequisite_codes'] = df['preReqNotes'].apply(parse_prerequisites)
+    df['prerequisite_codes'] = df['prerequisite_codes'].apply(find_combinations)
+    df['flattened_prerequisite_codes'] = df['prerequisite_codes'].apply(flatten_combinations)
+
+    # Filter courses for the specified major
+    major_courses = df[df['major'] == major_number]
+    major_courses = major_courses[
+        ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
+    ]
+
+    # Get list of all course strings in the major
+    course_list = major_courses['courseString'].tolist()
+    print("Course_list",course_list)
+   
+    # Create empty adjacency matrix
+    n = len(course_list)
+    adj_matrix = np.zeros((n, n))
+    
+    # Create a mapping of course strings to matrix indices
+    course_to_index = {}
+    for idx, course in enumerate(course_list):
+        course_to_index[course] = idx
+
+    
+    # Fill the adjacency matrix and collect external prerequisites
+    for index, row in major_courses.iterrows():
+
+        course = row['courseString']
+        prerequisites = row['flattened_prerequisite_codes']
+        
+        course_idx = course_to_index[course]
+        
+        # For each prerequisite combination
+        for prereq_combo in prerequisites:
+
+            # For each prerequisite in the combination
+            for prereq in prereq_combo:
+                if prereq in course_to_index:
+                    prereq_idx = course_to_index[prereq]
+                    adj_matrix[prereq_idx][course_idx] = 1
+
+    return adj_matrix, course_list 
+
+# Example usage:
+if __name__ == "__main__":
+    print_prereqs('198', df)
+    adj_matrix = create_adjacency_matrix('198', df)
+    print(adj_matrix)
+
