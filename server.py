@@ -24,27 +24,26 @@ def get_graph_data(major_number):
             'edges': []
         }
 
-        # Create nodes
-        for course in course_list:
+        # Create nodes from the course_list dictionary
+        for course_string, course_title in course_list.items():
             elements['nodes'].append({
                 'data': {
-                    'id': course,
-                    'label': course
+                    'id': course_string,
+                    'label': f"{course_string}: {course_title}"  
                 }
             })
 
         # Create edges based on the adjacency matrix
-        for i, course in enumerate(course_list):
+        for i, course_string in enumerate(course_list.keys()):
             for j, value in enumerate(adj_matrix[i]):
-                
                 if value == 1:  
                     elements['edges'].append({
+
                         'data': {
-                            'source': course_list[j],
-                            'target': course
+                            'source': list(course_list.keys())[j],
+                            'target': course_string
                         }
                     })
-
 
         return jsonify(elements)
 

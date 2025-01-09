@@ -110,7 +110,6 @@ def extract_external_prereqs(major_courses, df):
     
 
 def create_adjacency_matrix(major_number, df):
-
     df['prerequisite_codes'] = df['preReqNotes'].apply(parse_prerequisites)
     df['prerequisite_codes'] = df['prerequisite_codes'].apply(find_combinations)
     df['flattened_prerequisite_codes'] = df['prerequisite_codes'].apply(flatten_combinations)
@@ -121,36 +120,24 @@ def create_adjacency_matrix(major_number, df):
         ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
     ]
 
-    # Get list of all course strings in the major
-    course_list = major_courses['courseString'].tolist()
-    
+    # Create a dictionary for course strings and titles
+    course_list = {row['courseString']: row['title'] for index, row in major_courses.iterrows()}
+
     # Create an empty adjacency matrix
     n = len(course_list)
     adj_matrix = np.zeros((n, n))
     
     # Create a mapping of course strings to matrix indices
-    course_to_index = {}
-    for idx, course in enumerate(course_list):
-        course_to_index[course] = idx
-
+    course_to_index = {course: idx for idx, course in enumerate(course_list.keys())}
 
     # Fill the adjacency matrix
-    #Loop through rows
     for index, row in major_courses.iterrows():
-
-        #Course that you are searching prereqs for
         course = row['courseString']
-
-        #
         prerequisites = row['flattened_prerequisite_codes']
         
-        # Lopp through each prereq combo
         for prereq_combo in prerequisites:
-            
-            #Loop through each prereq in combo and 
             for prereq in prereq_combo:
                 if prereq in course_to_index:  
-                    
                     prereq_idx = course_to_index[prereq]
                     course_idx = course_to_index[course]
                     adj_matrix[prereq_idx][course_idx] = 1  
@@ -159,7 +146,7 @@ def create_adjacency_matrix(major_number, df):
     external_prereqs = extract_external_prereqs(major_courses, df)
     print(external_prereqs)
 
-    return adj_matrix, course_list, external_prereqs
+    return adj_matrix, course_list, external_prereqs  # Return the dictionary
 
 if __name__ == "__main__":
 
