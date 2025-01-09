@@ -1,9 +1,8 @@
-import itertools
 import re
 import pandas as pd
 import numpy as np
-
 import networkx as nx
+import itertools
 
 # Initialize a directed graph
 course_graph = nx.DiGraph()
@@ -119,6 +118,7 @@ def create_adjacency_matrix(major_number, df):
     major_courses = major_courses[
         ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
     ]
+
 
     # Create a dictionary for course strings and titles
     course_list = {row['courseString']: row['title'] for index, row in major_courses.iterrows()}
