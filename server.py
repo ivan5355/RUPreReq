@@ -17,15 +17,15 @@ def get_graph_data(major_number):
     
     try:
         
-        adj_matrix, course_list = cd.create_adjacency_matrix(major_number, df)
+        adj_matrix, course_list, external_prereqs = cd.create_adjacency_matrix(major_number, df)
 
         elements = {
             'nodes': [],
             'edges': []
         }
 
+        # Create nodes
         for course in course_list:
-
             elements['nodes'].append({
                 'data': {
                     'id': course,
@@ -36,8 +36,8 @@ def get_graph_data(major_number):
         # Create edges based on the adjacency matrix
         for i, course in enumerate(course_list):
             for j, value in enumerate(adj_matrix[i]):
-
-                if value == 1: 
+                
+                if value == 1:  
                     elements['edges'].append({
                         'data': {
                             'source': course_list[j],
@@ -45,7 +45,7 @@ def get_graph_data(major_number):
                         }
                     })
 
-        print(elements['edges'])
+
         return jsonify(elements)
 
     except Exception as e:
