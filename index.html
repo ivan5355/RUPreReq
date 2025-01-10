@@ -5,6 +5,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
     <style>
 
         body {
@@ -316,9 +318,12 @@
                             selector: 'edge',
                             style: {
                                 'width': 1.5,
-                                'line-color': '#888',
+                                'line-color': '#000000',
                                 'curve-style': 'bezier',
-                                'opacity': 0.7
+                                'opacity': 0.7,
+                                'source-arrow-shape': 'triangle',
+                                'source-arrow-color': '#000000',
+                                'arrow-scale': 1.5, 
                             }
                         }
                     ],
