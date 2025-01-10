@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, send_file, abort
+from flask_cors import CORS
 import pandas as pd
 import numpy as np
 import course_dependency as cd
@@ -36,7 +37,6 @@ def get_graph_data(major_number):
             for j, value in enumerate(adj_matrix[i]):
                 if value == 1:  
                     elements['edges'].append({
-
                         'data': {
                             'source': list(course_list.keys())[j],
                             'target': course_string
@@ -54,4 +54,4 @@ def serve_html():
     return send_file('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000) 
+    app.run(debug=True, port=7000) 
