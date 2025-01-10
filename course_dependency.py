@@ -69,44 +69,44 @@ def flatten_combinations(nested_combinations):
 
     return flattened_list
 
-# Generates all possible prerequisite combinations
-def print_prereqs(major_number, df):
-
-    # Filter the DataFrame for the specified major
-    major_courses = df[df['major'] == major_number]
-    major_courses = major_courses[
-        ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
-    ]
-    
-    # Print the courseString and flattened prerequisites
-    for index, row in major_courses.iterrows():
-        course_string = row['courseString']
-        flattened_prereqs = row['flattened_prerequisite_codes']
-        print(f"{course_string}: {flattened_prereqs}")
-        print('\n')
-        
-    
 #extract prereqs that are not part of the major
-def extract_external_prereqs(major_courses, df):
- 
-    #avoids duplicates
-    external_prereqs = set() 
+def extract_external_prereqs_with_titles(major_courses):
 
-    #iterate through each row
+    # Collect all major course
+    major_course_strings = major_courses['courseString']
+
+    # Initialize a set for external prerequisites
+    external_prereqs = set()
+
     for index, row in major_courses.iterrows():
 
-        prerequisites = row['flattened_prerequisite_codes']
-        
-        #loop through prereqs of major and check if the 
+        # Prereqs for the current course
+        prerequisites = row['flattened_prerequisite_codes']  
+
+        # Process each prerequisite combination
         for prereq_combo in prerequisites:
+
             for prereq in prereq_combo:
 
-                # Check if the prerequisite is in the major courses
-                if prereq not in major_courses['courseString'].values:
+                # Add to external prereqs if not part of the major courses
+                if prereq not in major_course_strings:
                     external_prereqs.add(prereq)
 
-    return list(external_prereqs)
+    external_prereqs_dict = {}
     
+    for prereq in external_prereqs:
+
+        # Search the DataFrame for the prerequisite's title by first acessing row where the prereq is
+        matching_row = df.loc[df['courseString'] == prereq]
+        
+        # Retrieve the title if a match exists
+        if not matching_row.empty:
+
+            #Access title by acessing first row of resulting data frame
+            external_prereqs_dict[prereq] = matching_row.iloc[0]['title']
+
+    return external_prereqs_dict
+
 
 def create_adjacency_matrix(major_number, df):
     df['prerequisite_codes'] = df['preReqNotes'].apply(parse_prerequisites)
@@ -119,9 +119,14 @@ def create_adjacency_matrix(major_number, df):
         ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
     ]
 
-
     # Create a dictionary for course strings and titles
     course_list = {row['courseString']: row['title'] for index, row in major_courses.iterrows()}
+
+    # external_prereqs is another dictionary with course strings and titles
+    external_prereqs = extract_external_prereqs_with_titles(major_courses)
+
+    # Extend course_list with external_prereqs
+    course_list.update(external_prereqs)
 
     # Create an empty adjacency matrix
     n = len(course_list)
@@ -142,11 +147,8 @@ def create_adjacency_matrix(major_number, df):
                     course_idx = course_to_index[course]
                     adj_matrix[prereq_idx][course_idx] = 1  
 
-    # Extract external prerequisites
-    external_prereqs = extract_external_prereqs(major_courses, df)
-    print(external_prereqs)
 
-    return adj_matrix, course_list, external_prereqs  # Return the dictionary
+    return adj_matrix, course_list
 
 if __name__ == "__main__":
 
