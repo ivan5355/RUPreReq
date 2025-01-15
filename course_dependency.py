@@ -120,7 +120,10 @@ def create_adjacency_matrix(major_number, df):
     ]
 
     # Create a dictionary for course strings and titles
-    course_list = {row['courseString']: row['title'] for index, row in major_courses.iterrows()}
+    course_list = {}
+    for index, row in major_courses.iterrows():
+        course_list[row['courseString']] = row['title']
+
 
     # external_prereqs is another dictionary with course strings and titles
     external_prereqs = extract_external_prereqs_with_titles(major_courses)
@@ -133,7 +136,10 @@ def create_adjacency_matrix(major_number, df):
     adj_matrix = np.zeros((n, n))
     
     # Create a mapping of course strings to matrix indices
-    course_to_index = {course: idx for idx, course in enumerate(course_list.keys())}
+    course_to_index = {}
+    for idx, course in enumerate(course_list.keys()):
+        course_to_index[course] = idx
+
 
     # Fill the adjacency matrix
     for index, row in major_courses.iterrows():

@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, send_file, abort
 from flask_cors import CORS
 import pandas as pd
-import numpy as np
 import course_dependency as cd
 
 app = Flask(__name__)
