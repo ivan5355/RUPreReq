@@ -165,7 +165,7 @@ def create_adjacency_matrix(major_number, df):
                     adj_matrix[prereq_idx][course_idx] = 1  
 
 
-    return adj_matrix, course_list, course_prereqs
+    return adj_matrix, course_list, course_prereqs_combinations
 
 if __name__ == "__main__":
 

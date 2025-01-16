@@ -92,7 +92,7 @@
     </div>
     
     <div class="controls">
-        <select id="majorSelect">
+        <select id="subjectSelect">
             <option value="">Select a Subject</option>
             <option value="010">Accounting</option>
             <option value="011">Administrative Studies</option>
@@ -259,7 +259,7 @@
             <option value="988">Women's, Gender, and Sexuality Studies</option>
             <option value="991">World Languages</option>
         </select>
-        <button onclick="searchCourses()">Search Subjects</button>
+        <button onclick="searchCourses()">Search Subject</button>
     </div>
 
     <div id="cy"></div>
@@ -271,10 +271,10 @@
         async function searchCourses() {
             
             //subject user selects
-            const majorNumber = document.getElementById('majorSelect').value;
+            const subjectNumber = document.getElementById('subjectSelect').value;
 
-            //If user clicks button but does not select major
-            if (!majorNumber) {
+            //If user clicks button but does not select subject
+            if (!subjectNumber) {
                 alert('Please select a subject.');
                 document.querySelector('.loading').style.display = 'none';
                 return;
@@ -282,7 +282,7 @@
 
             try {
 
-                const response = await fetch(`/api/graph/${majorNumber}`);
+                const response = await fetch(`/api/graph/${subjectNumber}`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
