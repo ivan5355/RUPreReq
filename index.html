@@ -93,7 +93,7 @@
     
     <div class="controls">
         <select id="majorSelect">
-            <option value="">Select a Major</option>
+            <option value="">Select a Subject</option>
             <option value="010">Accounting</option>
             <option value="011">Administrative Studies</option>
             <option value="016">African Studies</option>
@@ -275,7 +275,7 @@
 
             //If user clicks button but does not select major
             if (!majorNumber) {
-                alert('Please select a major.');
+                alert('Please select a subject.');
                 document.querySelector('.loading').style.display = 'none';
                 return;
             }
@@ -314,8 +314,8 @@
                                 'text-valign': 'center',
                                 'text-halign': 'center',
                                 'background-color': '#6FB1FC',
-                                'width': '100px',
-                                'height': '100px',
+                                'width': '125px',
+                                'height': '125px',
                                 'border-width': '2px',
                                 'border-color': '#555',
                                 'text-max-width': '80px' //max width that the text is allowed to be 

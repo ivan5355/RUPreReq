@@ -113,12 +113,23 @@ def create_adjacency_matrix(major_number, df):
     df['prerequisite_codes'] = df['prerequisite_codes'].apply(find_combinations)
     df['flattened_prerequisite_codes'] = df['prerequisite_codes'].apply(flatten_combinations)
 
+
     # Filter courses for the specified major
     major_courses = df[df['major'] == major_number]
     major_courses = major_courses[
         ~major_courses['courseString'].str.split(':').str[2].str.startswith(('5', '6', '7', '8', '9'))
     ]
+   
+    course_prereqs_combinations = {}
 
+    #Store each ocurse and its prereqs
+    for index, row in major_courses.iterrows():
+        course = row['courseString']
+        prereqs = row['flattened_prerequisite_codes']
+        course_prereqs_combinations[course] = prereqs
+
+    print(course_prereqs_combinations)
+    
     # Create a dictionary for course strings and titles
     course_list = {}
     for index, row in major_courses.iterrows():
@@ -154,10 +165,11 @@ def create_adjacency_matrix(major_number, df):
                     adj_matrix[prereq_idx][course_idx] = 1  
 
 
-    return adj_matrix, course_list
+    return adj_matrix, course_list, course_prereqs
 
 if __name__ == "__main__":
 
-    adj_matrix = create_adjacency_matrix('198', df)
-    print(adj_matrix)
+   adj_matrix, course_list, course_prereqs_combinations = create_adjacency_matrix('198', df)
+
+
 

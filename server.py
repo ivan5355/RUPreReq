@@ -15,7 +15,7 @@ def get_graph_data(major_number):
     
     try:
         
-        adj_matrix, course_list = cd.create_adjacency_matrix(major_number, df)
+        adj_matrix, course_list, course_prereqs_combinations = cd.create_adjacency_matrix(major_number, df)
 
         elements = {
             'nodes': [],
