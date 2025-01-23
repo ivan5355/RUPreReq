@@ -308,17 +308,36 @@
                         {
                             selector: 'node',
                             style: {
-                                'label': 'data(label)',// Set the label to the 'label' data field
-                                'text-wrap': 'wrap', // Wrap the text inside nodes
+                                'label': 'data(label)',
+                                'text-wrap': 'wrap',
                                 'font-size': '16px',
                                 'text-valign': 'center',
                                 'text-halign': 'center',
-                                'background-color': '#6FB1FC',
+                                'background-color': function(ele) {
+                                    
+                                    //uses regular expression to find the last 3 digits of the course code
+                                    const courseNum = ele.data('id').match(/\d{3}$/);
+
+                                    if (courseNum) {
+
+                                        //extracts the level of the course
+                                        const level = Math.floor(parseInt(courseNum[0]) / 100);
+
+                                        //switch case to set the background color based on the level
+                                        switch(level) {
+                                            case 0: return '#A9A9A9'; // Dark gray for undefined or default level
+                                            case 1: return '#8BC34A'; // Light green for 100-level 
+                                            case 2: return '#FFC107'; // Amber for 200-level 
+                                            case 3: return '#3F51B5'; // Indigo for 300-level 
+                                            case 4: return '#E91E63'; // Pink for 400-level 
+                                        }
+                                    }
+                                },
                                 'width': '125px',
                                 'height': '125px',
                                 'border-width': '2px',
                                 'border-color': '#555',
-                                'text-max-width': '80px' //max width that the text is allowed to be 
+                                'text-max-width': '80px'
                             }
                         },
                         {

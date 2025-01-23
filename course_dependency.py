@@ -1,11 +1,7 @@
 import re
 import pandas as pd
 import numpy as np
-import networkx as nx
 import itertools
-
-# Initialize a directed graph
-course_graph = nx.DiGraph()
 
 #Load the data 
 df = pd.read_json('rutgers_courses.json')
