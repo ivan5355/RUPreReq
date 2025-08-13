@@ -2,371 +2,517 @@
 <html>
 <head>
     <title>Course Prerequisites Visualization</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Core libs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
-    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-    <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
-    
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XE78N8F328"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){dataLayer.push(arguments);} 
     gtag('js', new Date());
-
     gtag('config', 'G-XE78N8F328');
     </script>
-    
+
     <style>
+        :root {
+            --brand: #cc0033;
+            --brand-dark: #990026;
+            --bg: #f7f7f9;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            background-color: var(--bg);
+            color: var(--text);
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            min-height: 100vh;
         }
 
         .header {
-            background-color: #cc0033; 
+            background: linear-gradient(90deg, var(--brand) 0%, #e80a3e 100%);
             color: white;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
         }
- 
-        .controls {
-            background-color: white;
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
+        .header .title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .subtext {
+            margin: 6px 0 0 0;
+            font-size: 12px;
+            opacity: 0.9;
         }
 
-        select, input {
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 200px;
+        .toolbar {
+            background-color: var(--panel);
+            padding: 12px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
+
+        .toolbar .group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .toolbar label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        input[type="text"], select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            min-width: 220px;
+            outline: none;
+            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: #d1d5db;
+            box-shadow: 0 0 0 3px rgba(204,0,51,0.12);
+        }
+
         button {
-            padding: 8px 20px;
-            background-color: #cc0033;
+            padding: 9px 14px;
+            background-color: var(--brand);
             color: white;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid var(--brand);
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.3s;
+            transition: background-color 0.2s ease, transform 0.05s ease;
+        }
+        button:hover { background-color: var(--brand-dark); }
+        button:active { transform: translateY(1px); }
+        button.secondary {
+            background: #ffffff;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        button.secondary:hover {
+            background: #f3f4f6;
+        }
+        button:disabled {
+            background: #d1d5db;
+            border-color: #d1d5db;
+            cursor: not-allowed;
         }
 
-        button:hover {
-            background-color: #990026;
+        .canvas {
+            position: relative;
+            padding: 12px;
         }
 
         #cy {
             width: 100%;
-            height: calc(100vh - 130px);
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: calc(100vh - 168px);
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
         }
 
-        .disclaimer {
-            text-align: center;
-            margin: 20px 0;
+        /* Legend */
+        .legend {
+            position: absolute;
+            right: 24px;
+            top: 24px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            box-shadow: var(--shadow);
             font-size: 12px;
-            color: #555;
+        }
+        .legend .row { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+        .legend .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid #9ca3af; }
+        .legend .muted { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+        /* Loading overlay */
+        .loading {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid #e5e7eb;
+            border-top-color: var(--brand);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 12px 16px 20px;
         }
 
+        @media (max-width: 720px) {
+            #cy { height: calc(100vh - 200px); }
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h1>Rutgers Course Prerequisites Visualization</h1>
-        <p><strong>Disclaimer:</strong> This platform is not affiliated with Rutgers University.</p>
-    </div>
-    
-    <div class="controls">
-        <select id="subjectSelect">
-            <option value="">Select a Subject</option>
-            <option value="010">Accounting</option>
-            <option value="011">Administrative Studies</option>
-            <option value="016">African Studies</option>
-            <option value="013">African, Middle Eastern, and South Asian Languages and Literatures</option>
-            <option value="014">Africana Studies</option>
-            <option value="035">Agricultural and Natural Resource Management</option>
-            <option value="020">Agriculture and Food Systems</option>
-            <option value="047">Alcohol Studies</option>
-            <option value="050">American Studies</option>
-            <option value="067">Animal Science</option>
-            <option value="070">Anthropology</option>
-            <option value="074">Arabic Languages</option>
-            <option value="078">Armenian</option>
-            <option value="080">Art</option>
-            <option value="081">Art</option>
-            <option value="082">Art History</option>
-            <option value="090">Arts and Sciences</option>
-            <option value="098">Asian Studies</option>
-            <option value="115">Biochemistry</option>
-            <option value="117">Bioenvironmental Engineering</option>
-            <option value="119">Biological Sciences</option>
-            <option value="122">Biomathematics</option>
-            <option value="125">Biomedical Engineering</option>
-            <option value="126">Biotechnology</option>
-            <option value="136">Business Analytics and Information Technology</option>
-            <option value="140">Business Law</option>
-            <option value="146">Cell Biology and Neuroscience</option>
-            <option value="158">Chemical Biology</option>
-            <option value="155">Chemical and Biochemical Engineering</option>
-            <option value="160">Chemistry</option>
-            <option value="165">Chinese</option>
-            <option value="175">Cinema Studies</option>
-            <option value="180">Civil and Environmental Engineering</option>
-            <option value="190">Classics</option>
-            <option value="185">Cognitive Science</option>
-            <option value="192">Communication</option>
-            <option value="189">Communication and Media Studies</option>
-            <option value="193">Community Health Outreach</option>
-            <option value="195">Comparative Literature</option>
-            <option value="198">Computer Science</option>
-            <option value="202">Criminal Justice</option>
-            <option value="203">Dance</option>
-            <option value="206">Dance</option>
-            <option value="207">Dance Education</option>
-            <option value="219">Data Science</option>
-            <option value="216">Ecology, Evolution and Natural Resources</option>
-            <option value="220">Economics</option>
-            <option value="300">Education</option>
-            <option value="364">Educational Opportunity Fund</option>
-            <option value="332">Electrical and Computer Engineering</option>
-            <option value="355">English - Composition and Writing</option>
-            <option value="351">English - Creative Writing</option>
-            <option value="354">English - Film Studies</option>
-            <option value="358">English - Literature</option>
-            <option value="359">English - Theories and Methods</option>
-            <option value="356">English as a Second Language</option>
-            <option value="370">Entomology</option>
-            <option value="382">Entrepreneurship</option>
-            <option value="573">Environmental Planning and Design</option>
-            <option value="374">Environmental Policy, Institutions and Behavior</option>
-            <option value="375">Environmental Sciences</option>
-            <option value="381">Environmental Studies</option>
-            <option value="015">Environmental and Biological Sciences</option>
-            <option value="373">Environmental and Business Economics</option>
-            <option value="522">Ethics in Business Environment</option>
-            <option value="360">European Studies</option>
-            <option value="377">Exercise Science</option>
-            <option value="211">Filmmaking</option>
-            <option value="390">Finance</option>
-            <option value="400">Food Science</option>
-            <option value="420">French</option>
-            <option value="440">General Engineering</option>
-            <option value="447">Genetics</option>
-            <option value="450">Geography</option>
-            <option value="460">Geological Sciences</option>
-            <option value="470">German</option>
-            <option value="490">Greek</option>
-            <option value="489">Greek, Modern</option>
-            <option value="501">Health Administration</option>
-            <option value="505">Hindi</option>
-            <option value="510">History</option>
-            <option value="508">History - Africa, Asia, Latin America</option>
-            <option value="512">History - American</option>
-            <option value="506">History - General/Comparative</option>
-            <option value="533">Human Resource Management</option>
-            <option value="535">Hungarian</option>
-            <option value="540">Industrial and Systems Engineering</option>
-            <option value="547">Information Technology and Informatics</option>
-            <option value="557">Interdisciplinary - Mason Gross</option>
-            <option value="554">Interdisciplinary Studies</option>
-            <option value="556">Interdisciplinary Studies - Arts and Sciences</option>
-            <option value="558">International Studies</option>
-            <option value="560">Italian</option>
-            <option value="565">Japanese</option>
-            <option value="563">Jewish Studies</option>
-            <option value="567">Journalism and Media Studies</option>
-            <option value="574">Korean</option>
-            <option value="575">Labor Studies</option>
-            <option value="550">Landscape Architecture</option>
-            <option value="617">Languages and Cultures</option>
-            <option value="580">Latin</option>
-            <option value="590">Latin American Studies</option>
-            <option value="595">Latino and Hispanic Caribbean Studies</option>
-            <option value="607">Leadership Skills</option>
-            <option value="615">Linguistics</option>
-            <option value="620">Management</option>
-            <option value="624">Management and Work</option>
-            <option value="628">Marine Sciences</option>
-            <option value="630">Marketing</option>
-            <option value="635">Materials Science and Engineering</option>
-            <option value="640">Mathematics</option>
-            <option value="650">Mechanical and Aerospace Engineering</option>
-            <option value="652">Medical Ethics and Policy</option>
-            <option value="667">Medieval Studies</option>
-            <option value="670">Meteorology</option>
-            <option value="680">Microbiology</option>
-            <option value="685">Middle Eastern and Islamic Studies</option>
-            <option value="690">Military Education, Air Force</option>
-            <option value="691">Military Education, Army</option>
-            <option value="692">Military Education, Navy</option>
-            <option value="694">Molecular Biology and Biochemistry</option>
-            <option value="700">Music</option>
-            <option value="701">Music, Applied</option>
-            <option value="705">Nursing</option>
-            <option value="709">Nutritional Sciences</option>
-            <option value="713">Organizational Leadership</option>
-            <option value="723">Persian</option>
-            <option value="715">Pharmaceutical Chemistry</option>
-            <option value="721">Pharmaceutics</option>
-            <option value="718">Pharmacology, Cellular and Molecular</option>
-            <option value="720">Pharmacy</option>
-            <option value="725">Pharmacy Practice and Administration</option>
-            <option value="730">Philosophy</option>
-            <option value="745">Physician Assistant</option>
-            <option value="750">Physics</option>
-            <option value="762">Planning and Public Policy</option>
-            <option value="776">Plant Science</option>
-            <option value="775">Policy, Health, and Administration</option>
-            <option value="787">Polish</option>
-            <option value="790">Political Science</option>
-            <option value="810">Portuguese</option>
-            <option value="830">Psychology</option>
-            <option value="843">Public Administration and Management</option>
-            <option value="832">Public Health</option>
-            <option value="833">Public Policy</option>
-            <option value="851">Real Estate</option>
-            <option value="840">Religion</option>
-            <option value="860">Russian</option>
-            <option value="902">SEBS Internship</option>
-            <option value="904">Social Justice</option>
-            <option value="910">Social Work</option>
-            <option value="920">Sociology</option>
-            <option value="940">Spanish</option>
-            <option value="955">Sport Management</option>
-            <option value="960">Statistics</option>
-            <option value="959">Study Abroad</option>
-            <option value="799">Supply Chain and Marketing Science</option>
-            <option value="965">Theater</option>
-            <option value="966">Theater Arts</option>
-            <option value="973">Turkish</option>
-            <option value="971">Urban Planning and Design</option>
-            <option value="975">Urban Studies and Community Development</option>
-            <option value="988">Women's, Gender, and Sexuality Studies</option>
-            <option value="991">World Languages</option>
-        </select>
-        <button onclick="searchCourses()">Search Subject</button>
+        <h1 class="title">Rutgers Course Prerequisites Visualization</h1>
+        <p class="subtext">Explore course dependency graphs by subject. This tool is community-built and unaffiliated with Rutgers University.</p>
     </div>
 
-    <div id="cy"></div>
+    <div class="toolbar">
+        <div class="group">
+            <label for="subjectSelect">Subject</label>
+            <select id="subjectSelect">
+                <option value="">Select a Subject</option>
+                <!-- options preserved -->
+                <option value="010">Accounting</option>
+                <option value="011">Administrative Studies</option>
+                <option value="016">African Studies</option>
+                <option value="013">African, Middle Eastern, and South Asian Languages and Literatures</option>
+                <option value="014">Africana Studies</option>
+                <option value="035">Agricultural and Natural Resource Management</option>
+                <option value="020">Agriculture and Food Systems</option>
+                <option value="047">Alcohol Studies</option>
+                <option value="050">American Studies</option>
+                <option value="067">Animal Science</option>
+                <option value="070">Anthropology</option>
+                <option value="074">Arabic Languages</option>
+                <option value="078">Armenian</option>
+                <option value="080">Art</option>
+                <option value="081">Art</option>
+                <option value="082">Art History</option>
+                <option value="090">Arts and Sciences</option>
+                <option value="098">Asian Studies</option>
+                <option value="115">Biochemistry</option>
+                <option value="117">Bioenvironmental Engineering</option>
+                <option value="119">Biological Sciences</option>
+                <option value="122">Biomathematics</option>
+                <option value="125">Biomedical Engineering</option>
+                <option value="126">Biotechnology</option>
+                <option value="136">Business Analytics and Information Technology</option>
+                <option value="140">Business Law</option>
+                <option value="146">Cell Biology and Neuroscience</option>
+                <option value="158">Chemical Biology</option>
+                <option value="155">Chemical and Biochemical Engineering</option>
+                <option value="160">Chemistry</option>
+                <option value="165">Chinese</option>
+                <option value="175">Cinema Studies</option>
+                <option value="180">Civil and Environmental Engineering</option>
+                <option value="190">Classics</option>
+                <option value="185">Cognitive Science</option>
+                <option value="192">Communication</option>
+                <option value="189">Communication and Media Studies</option>
+                <option value="193">Community Health Outreach</option>
+                <option value="195">Comparative Literature</option>
+                <option value="198">Computer Science</option>
+                <option value="202">Criminal Justice</option>
+                <option value="203">Dance</option>
+                <option value="206">Dance</option>
+                <option value="207">Dance Education</option>
+                <option value="219">Data Science</option>
+                <option value="216">Ecology, Evolution and Natural Resources</option>
+                <option value="220">Economics</option>
+                <option value="300">Education</option>
+                <option value="364">Educational Opportunity Fund</option>
+                <option value="332">Electrical and Computer Engineering</option>
+                <option value="355">English - Composition and Writing</option>
+                <option value="351">English - Creative Writing</option>
+                <option value="354">English - Film Studies</option>
+                <option value="358">English - Literature</option>
+                <option value="359">English - Theories and Methods</option>
+                <option value="356">English as a Second Language</option>
+                <option value="370">Entomology</option>
+                <option value="382">Entrepreneurship</option>
+                <option value="573">Environmental Planning and Design</option>
+                <option value="374">Environmental Policy, Institutions and Behavior</option>
+                <option value="375">Environmental Sciences</option>
+                <option value="381">Environmental Studies</option>
+                <option value="015">Environmental and Biological Sciences</option>
+                <option value="373">Environmental and Business Economics</option>
+                <option value="522">Ethics in Business Environment</option>
+                <option value="360">European Studies</option>
+                <option value="377">Exercise Science</option>
+                <option value="211">Filmmaking</option>
+                <option value="390">Finance</option>
+                <option value="400">Food Science</option>
+                <option value="420">French</option>
+                <option value="440">General Engineering</option>
+                <option value="447">Genetics</option>
+                <option value="450">Geography</option>
+                <option value="460">Geological Sciences</option>
+                <option value="470">German</option>
+                <option value="490">Greek</option>
+                <option value="489">Greek, Modern</option>
+                <option value="501">Health Administration</option>
+                <option value="505">Hindi</option>
+                <option value="510">History</option>
+                <option value="508">History - Africa, Asia, Latin America</option>
+                <option value="512">History - American</option>
+                <option value="506">History - General/Comparative</option>
+                <option value="533">Human Resource Management</option>
+                <option value="535">Hungarian</option>
+                <option value="540">Industrial and Systems Engineering</option>
+                <option value="547">Information Technology and Informatics</option>
+                <option value="557">Interdisciplinary - Mason Gross</option>
+                <option value="554">Interdisciplinary Studies</option>
+                <option value="556">Interdisciplinary Studies - Arts and Sciences</option>
+                <option value="558">International Studies</option>
+                <option value="560">Italian</option>
+                <option value="565">Japanese</option>
+                <option value="563">Jewish Studies</option>
+                <option value="567">Journalism and Media Studies</option>
+                <option value="574">Korean</option>
+                <option value="575">Labor Studies</option>
+                <option value="550">Landscape Architecture</option>
+                <option value="617">Languages and Cultures</option>
+                <option value="580">Latin</option>
+                <option value="590">Latin American Studies</option>
+                <option value="595">Latino and Hispanic Caribbean Studies</option>
+                <option value="607">Leadership Skills</option>
+                <option value="615">Linguistics</option>
+                <option value="620">Management</option>
+                <option value="624">Management and Work</option>
+                <option value="628">Marine Sciences</option>
+                <option value="630">Marketing</option>
+                <option value="635">Materials Science and Engineering</option>
+                <option value="640">Mathematics</option>
+                <option value="650">Mechanical and Aerospace Engineering</option>
+                <option value="652">Medical Ethics and Policy</option>
+                <option value="667">Medieval Studies</option>
+                <option value="670">Meteorology</option>
+                <option value="680">Microbiology</option>
+                <option value="685">Middle Eastern and Islamic Studies</option>
+                <option value="690">Military Education, Air Force</option>
+                <option value="691">Military Education, Army</option>
+                <option value="692">Military Education, Navy</option>
+                <option value="694">Molecular Biology and Biochemistry</option>
+                <option value="700">Music</option>
+                <option value="701">Music, Applied</option>
+                <option value="705">Nursing</option>
+                <option value="709">Nutritional Sciences</option>
+                <option value="713">Organizational Leadership</option>
+                <option value="723">Persian</option>
+                <option value="715">Pharmaceutical Chemistry</option>
+                <option value="721">Pharmaceutics</option>
+                <option value="718">Pharmacology, Cellular and Molecular</option>
+                <option value="720">Pharmacy</option>
+                <option value="725">Pharmacy Practice and Administration</option>
+                <option value="730">Philosophy</option>
+                <option value="745">Physician Assistant</option>
+                <option value="750">Physics</option>
+                <option value="762">Planning and Public Policy</option>
+                <option value="776">Plant Science</option>
+                <option value="775">Policy, Health, and Administration</option>
+                <option value="787">Polish</option>
+                <option value="790">Political Science</option>
+                <option value="810">Portuguese</option>
+                <option value="830">Psychology</option>
+                <option value="843">Public Administration and Management</option>
+                <option value="832">Public Health</option>
+                <option value="833">Public Policy</option>
+                <option value="851">Real Estate</option>
+                <option value="840">Religion</option>
+                <option value="860">Russian</option>
+                <option value="902">SEBS Internship</option>
+                <option value="904">Social Justice</option>
+                <option value="910">Social Work</option>
+                <option value="920">Sociology</option>
+                <option value="940">Spanish</option>
+                <option value="955">Sport Management</option>
+                <option value="960">Statistics</option>
+                <option value="959">Study Abroad</option>
+                <option value="799">Supply Chain and Marketing Science</option>
+                <option value="965">Theater</option>
+                <option value="966">Theater Arts</option>
+                <option value="973">Turkish</option>
+                <option value="971">Urban Planning and Design</option>
+                <option value="975">Urban Studies and Community Development</option>
+                <option value="988">Women's, Gender, and Sexuality Studies</option>
+                <option value="991">World Languages</option>
+            </select>
+        </div>
+        <div class="group">
+            <button id="searchBtn">Search Subject</button>
+        </div>
+    </div>
+
+    <div class="canvas">
+        <div id="cy"></div>
+        <div class="legend" aria-hidden="true">
+            <div class="row"><span class="swatch" style="background:#A9A9A9"></span> <span>0-level or undefined</span></div>
+            <div class="row"><span class="swatch" style="background:#8BC34A"></span> <span>100-level</span></div>
+            <div class="row"><span class="swatch" style="background:#FFC107"></span> <span>200-level</span></div>
+            <div class="row"><span class="swatch" style="background:#3F51B5"></span> <span>300-level</span></div>
+            <div class="row"><span class="swatch" style="background:#E91E63"></span> <span>400-level</span></div>
+            <div class="muted">Node color indicates course level</div>
+        </div>
+    </div>
+
+    <div class="loading" role="status" aria-live="polite" aria-busy="true">
+        <div class="spinner" title="Loading"></div>
+    </div>
+
+    <div class="footer">
+        <p><strong>Disclaimer:</strong> This platform is not affiliated with Rutgers University.</p>
+    </div>
 
     <script>
         let cy;
 
-        
-        async function searchCourses() {
-            
-            //subject user selects
-            const subjectNumber = document.getElementById('subjectSelect').value;
+        const subjectSelect = document.getElementById('subjectSelect');
+        const searchBtn = document.getElementById('searchBtn');
+        const loadingEl = document.querySelector('.loading');
 
-            //If user clicks button but does not select subject
+        function showLoading(show) {
+            loadingEl.style.display = show ? 'flex' : 'none';
+        }
+
+        async function searchCourses() {
+            const subjectNumber = subjectSelect.value;
             if (!subjectNumber) {
                 alert('Please select a subject.');
-                document.querySelector('.loading').style.display = 'none';
+                showLoading(false);
                 return;
             }
 
+            searchBtn.disabled = true;
+            showLoading(true);
+
             try {
-
                 const response = await fetch(`/api/graph/${subjectNumber}`);
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            
                 const data = await response.json();
 
-                 // Define the elements (nodes and edges) for the Cytoscape graph
-                const elements = {
-                    nodes: data.nodes,
-                    edges: data.edges
-                };
+                const elements = { nodes: data.nodes, edges: data.edges };
 
-                // If the graph already exist destroy it before creating a new one
-                if (cy) {
-                    cy.destroy();
-                }
-                
+                if (cy) { cy.destroy(); }
+
                 cy = cytoscape({
                     container: document.getElementById('cy'),
-                    elements: elements,
+                    elements,
                     style: [
                         {
                             selector: 'node',
                             style: {
                                 'label': 'data(label)',
                                 'text-wrap': 'wrap',
-                                'font-size': '16px',
+                                'font-size': '14px',
                                 'text-valign': 'center',
                                 'text-halign': 'center',
                                 'background-color': function(ele) {
-                                    
-                                    //uses regular expression to find the last 3 digits of the course code
                                     const courseNum = ele.data('id').match(/\d{3}$/);
-
                                     if (courseNum) {
-
-                                        //extracts the level of the course
                                         const level = Math.floor(parseInt(courseNum[0]) / 100);
-
-                                        //switch case to set the background color based on the level
                                         switch(level) {
-                                            case 0: return '#A9A9A9'; // Dark gray for undefined or default level
-                                            case 1: return '#8BC34A'; // Light green for 100-level 
-                                            case 2: return '#FFC107'; // Amber for 200-level 
-                                            case 3: return '#3F51B5'; // Indigo for 300-level 
-                                            case 4: return '#E91E63'; // Pink for 400-level 
+                                            case 0: return '#A9A9A9';
+                                            case 1: return '#8BC34A';
+                                            case 2: return '#FFC107';
+                                            case 3: return '#3F51B5';
+                                            case 4: return '#E91E63';
+                                            default: return '#A9A9A9';
                                         }
                                     }
+                                    return '#A9A9A9';
                                 },
-                                'width': '125px',
-                                'height': '125px',
+                                'width': '110px',
+                                'height': '110px',
                                 'border-width': '2px',
-                                'border-color': '#555',
-                                'text-max-width': '80px'
+                                'border-color': '#9ca3af',
+                                'color': '#111827',
+                                'text-max-width': '90px',
+                                'overlay-opacity': 0
                             }
                         },
                         {
                             selector: 'edge',
                             style: {
-                                'width': 1.5,
-                                'line-color': '#000000',
+                                'width': 2,
+                                'line-color': function(ele) {
+                                    const comboSize = ele.data('comboSize') || 1;
+                                    const comboIndex = ele.data('comboIndex') || 0;
+                                    if (comboSize === 1) { return '#9ca3af'; }
+                                    const colors = ['#ef4444','#22c55e','#3b82f6','#a855f7','#06b6d4','#f59e0b','#8b5cf6','#16a34a'];
+                                    return colors[comboIndex % colors.length];
+                                },
                                 'curve-style': 'bezier',
-                                'opacity': 0.7,
-                                'source-arrow-shape': 'triangle',
-                                'source-arrow-color': '#000000',
-                                'arrow-scale': 1.5, 
+                                'opacity': 0.75,
+                                'target-arrow-shape': 'triangle',
+                                'target-arrow-color': function(ele) { return ele.style('line-color'); },
+                                'arrow-scale': 1.2,
+                                'z-index': function(ele) { return ele.data('comboIndex') || 0; }
                             }
+                        },
+                        {
+                            selector: 'edge.same-combo',
+                            style: { 'width': 3, 'opacity': 1 }
                         }
                     ],
-                    layout: {
-                        name: 'dagre', //arranges the nodes in a way that minimizes edge crossings and ensures that the edges flow in one direction. Ment for directed graphs.
-                        rankDir: 'TB',// Specifies that direction in which nodes should be arranged within the layout is top to bottom
-                        fit: true // scales view so that all nodes and edges are visible within the defined area
-                    }
+                    layout: { name: 'dagre', rankDir: 'TB', fit: true, nodeSep: 30, rankSep: 50, edgeSep: 20 }
+                });
+
+                // Hover highlight for same combination
+                cy.on('mouseover', 'edge', function(e) {
+                    const edge = e.target;
+                    const comboIndex = edge.data('comboIndex') || 0;
+                    const target = edge.data('target');
+                    cy.edges().filter(function(ele) {
+                        return ele.data('target') === target && (ele.data('comboIndex') || 0) === comboIndex;
+                    }).addClass('same-combo');
+                });
+                cy.on('mouseout', 'edge', function() {
+                    cy.edges().removeClass('same-combo');
                 });
 
             } catch (error) {
                 console.error('Error loading search results:', error);
                 alert('Error loading course data. Please try again.');
             } finally {
-                document.querySelector('.loading').style.display = 'none';
+                showLoading(false);
+                searchBtn.disabled = false;
             }
         }
+
+        // Wire up UI
+        searchBtn.addEventListener('click', searchCourses);
     </script>
 </body>
 </html> 
