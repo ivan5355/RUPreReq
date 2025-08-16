@@ -120,10 +120,6 @@ def get_course_prereqs(major_number, course_string):
     
     return response_data
 
-
-
-
-
 if __name__ == '__main__':
     app.run(debug=True, port=7000)
 

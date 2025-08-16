@@ -48,11 +48,7 @@ gunicorn -w 2 -b 0.0.0.0:7000 server:app
 
 ## Usage
 1. Use the Filter box to quickly find a subject by name or number (e.g., "Computer" or "198").
-2. Select a subject and click "Search Subject" (or press Enter).
-3. Use:
-   - Fit Graph: zoom to fit
-   - Reset Layout: re-run Dagre layout
-   - Clear: remove the current graph
+2. Select a subject and click "Search Subject".
 
 ### Legend
 - Node color indicates course level:
