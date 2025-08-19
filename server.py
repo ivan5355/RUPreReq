@@ -120,6 +120,14 @@ def get_course_prereqs(major_number, course_string):
     
     return response_data
 
+@app.route('/health')
+def health():
+    return jsonify({"status": "ok"}), 200
+
+@app.route('/test')
+def test():
+    return jsonify({"message": "Flask app is running", "courses_loaded": len(df) if 'df' in globals() else 0}), 200
+
 if __name__ == '__main__':
     app.run(debug=True, port=7000)
 
