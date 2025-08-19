@@ -1,1 +1,1 @@
-web: gunicorn -c gunicorn.config 
+web: gunicorn --config gunicorn.config server:app 
