@@ -7,9 +7,6 @@ An interactive web application that visualizes course prerequisites across Rutge
 ## Features
 - Visual prerequisite graphs per subject using Cytoscape.js
 - Color-coded nodes by course level (100/200/300/400)
-- Sticky toolbar with subject filter and quick actions (Fit, Reset, Clear)
-- Loading overlay for feedback on long fetches
-- Works entirely from a simple Flask backend endpoint
 
 ## Prerequisites
 - Python 3.9+ (3.11 recommended)
