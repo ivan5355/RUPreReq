@@ -4,12 +4,14 @@ from flask_cors import CORS
 import pandas as pd
 import course_dependency as cd
 from pprint import pprint
+from pathlib import Path
 
 
 app = Flask(__name__)
 
 # Load the course data from the JSON file and extract the major field
-df = pd.read_json('rutgers_courses.json')
+BASE_DIR = Path(__file__).resolve().parent
+df = pd.read_json(BASE_DIR / 'rutgers_courses.json')
 df['major'] = df['courseString'].str.split(':').str[1]
 
 
@@ -23,7 +25,7 @@ def serve_html():
     Returns:
         send_file: The `index.html` file to be served in the browser.
     """
-    return send_file('index.html')
+    return send_file(str(BASE_DIR / 'index.html'))
 
 @app.route('/api/graph/<major_number>')
 def get_graph_data(major_number):
